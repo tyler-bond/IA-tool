@@ -32,7 +32,7 @@
   color: white;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   user-select: none;
-  font-weight: 600;
+  font-weight: bold;
   font-size: 22px;
   cursor: pointer;
   white-space: nowrap;
@@ -49,7 +49,7 @@
   color: #1a0dab;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   user-select: none;
-  font-weight: 600;
+  font-weight: bold;
   font-size: 22px;
   cursor: pointer;
   white-space: nowrap;
@@ -66,7 +66,7 @@
   color: white;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 22px;
-  font-weight: 600;
+  font-weight: bold;
   user-select: none;
   z-index: 2;
   background: #999999;
@@ -80,8 +80,8 @@
   right: 115px;
   color: white;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: bold;
   user-select: none;
   z-index: 2;
   background: #81C784;
@@ -247,7 +247,7 @@
     fill-opacity: 1;
   }
   g.label text {
-    font: 20px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font: 18px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     font-weight: 600;
     fill: #fff;
     text-anchor: middle;
@@ -266,7 +266,7 @@
     border-radius: 6px;
     pointer-events: none;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     white-space: nowrap;
     opacity: 0;
@@ -301,10 +301,11 @@ const backLink = d3.select("#back-link");
 
 let packedRoot, focus, view;
 
-// Create instruction text ONCE and keep it persistent
+let bubbleLabelFontSize; // Define globally
+
 const leafInstructionText = g.append("text")
   .attr("x", layoutWidth / 2)
-  .attr("y", 790) // initial/default y-position
+  .attr("y", 790)
   .attr("text-anchor", "middle")
   .style("font-family", "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif")
   .style("font-weight", "600")
@@ -315,10 +316,9 @@ const leafInstructionText = g.append("text")
   .style("display", "none")
   .text("Mouse Over to View Page Title\u00A0\u00A0/\u00A0\u00A0Click to Open Page in New Tab");
 
-// Create front page description text ONCE and keep it persistent
 const frontPageDescription = g.append("text")
   .attr("x", layoutWidth / 2)
-  .attr("y", 790) // placeholder; will update dynamically
+  .attr("y", 790)
   .attr("text-anchor", "middle")
   .style("font-family", "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif")
   .style("font-weight", "600")
@@ -326,11 +326,9 @@ const frontPageDescription = g.append("text")
   .style("fill", "black")
   .style("user-select", "none")
   .style("pointer-events", "none")
-  .style("display", "block") // initially visible on homepage
+  .style("display", "block")
   .text("This HUD.gov Information Architecture (IA) Interactive Tool was developed by HUD's Customer Experience (CX) division. All information is publicly available on the HUD.gov website.");
 
-
-// Adjust instruction text position based on screen size
 function updateLeafInstructionPosition() {
   const screenHeight = window.innerHeight;
   const screenWidth = window.innerWidth;
@@ -350,29 +348,43 @@ function updateLeafInstructionPosition() {
   }
 
   leafInstructionText.attr("y", yPos);
-  frontPageDescription.attr("y", yPos); // Keep them aligned
-}
+  frontPageDescription.attr("y", yPos);
 
+  let descriptionFontSize;
+  let tooltipFontSize;
+  let labelFontSize;
 
+  if (screenWidth <= 1280) {
+    descriptionFontSize = "12px";
+    tooltipFontSize = "10px";
+    labelFontSize = "12px";
+    bubbleLabelFontSize = "10px";
+  } else if (screenWidth <= 1024) {
+    descriptionFontSize = "14px";
+    tooltipFontSize = "12px";
+    labelFontSize = "14px";
+    bubbleLabelFontSize = "10px";
+  } else if (screenWidth <= 1366) {
+    descriptionFontSize = "18px";
+    tooltipFontSize = "14px";
+    labelFontSize = "18px";
+    bubbleLabelFontSize = "14px";
+  } else {
+    descriptionFontSize = "20px";
+    tooltipFontSize = "16px";
+    labelFontSize = "20px";
+    bubbleLabelFontSize = "18px";
+  }
 
-// Call it once during setup
-updateLeafInstructionPosition();
+  frontPageDescription.style("font-size", descriptionFontSize);
+  leafInstructionText.style("font-size", labelFontSize);
 
-// And again whenever the window resizes
-window.addEventListener("resize", updateLeafInstructionPosition);
-
-
-function packData(data) {
-  return d3.pack()
-    .size([layoutWidth, layoutHeight])
-    .padding(5)(d3.hierarchy(data)
-      .sum(d => d.children ? 0 : 1)
-      .sort((a, b) => b.value - a.value)
-    );
+  if (tooltip) {
+    tooltip.style("font-size", tooltipFontSize);
+  }
 }
 
 function update(focusNode) {
-  // Remove all except the instruction text by selecting just the bubbles and labels
   g.selectAll("circle.bubble").remove();
   g.selectAll("g.label").remove();
 
@@ -381,83 +393,74 @@ function update(focusNode) {
 
   const nodes = focus.children || [];
 
-  // Show instruction text if ALL visible nodes are leaf nodes
-const allLeavesVisible = nodes.length > 0 && nodes.every(d => !d.children || d.children.length === 0);
-leafInstructionText.style("display", allLeavesVisible ? "block" : "none");
+  const allLeavesVisible = nodes.length > 0 && nodes.every(d => !d.children || d.children.length === 0);
+  leafInstructionText.style("display", allLeavesVisible ? "block" : "none");
 
-frontPageDescription.style("display", focus.data === packedRoot.data ? "block" : "none");
+  frontPageDescription.style("display", focus.data === packedRoot.data ? "block" : "none");
 
-// 1. Color mapping
-const colorMap = new Map();
-
-// Color leaves yellow and parents by rank
-nodes.forEach(node => {
-  if (!node.children) {
-    colorMap.set(node, "#FFD54F"); // leaf
-  }
-});
-
-const parents = nodes.filter(n => n.children);
-const rankColors = ["#999999", "#E57373", "#64B5F6", "#81C784", "#FFD54F"];
-parents.sort((a, b) => b.value - a.value).forEach((node, i) => {
-  colorMap.set(node, rankColors[i] || rankColors[rankColors.length - 1]);
-});
-
-// 2. Draw circles with click behavior and yellow leaves
-const circles = g.selectAll("circle.bubble")
-  .data(nodes)
-  .join("circle")
-  .attr("class", "bubble")
-  .attr("r", d => d.r)
-  .attr("cx", d => d.x)
-  .attr("cy", d => d.y)
-  .attr("fill", d => colorMap.get(d))
-  .style("cursor", d => d.children ? "pointer" : (d.data.hyperlink ? "pointer" : "default"))
-  .on("click", (event, d) => {
-    if (d.children) {
-      zoom(event, d);
-    } else if (d.data.hyperlink) {
-      window.open(d.data.hyperlink, "_blank");
+  const colorMap = new Map();
+  nodes.forEach(node => {
+    if (!node.children) {
+      colorMap.set(node, "#FFD54F");
     }
-    event.stopPropagation();
-  })
-  .on("mousemove", (event, d) => {
-    tooltip.style("opacity", 1)
-           .html(d.data.name)
-           .style("left", `${event.pageX + 12}px`)
-           .style("top", `${event.pageY + 12}px`);
-  })
-  .on("mouseout", () => tooltip.style("opacity", 0));
+  });
 
+  const parents = nodes.filter(n => n.children);
+  const rankColors = ["#999999", "#E57373", "#64B5F6", "#81C784", "#FFD54F"];
+  parents.sort((a, b) => b.value - a.value).forEach((node, i) => {
+    colorMap.set(node, rankColors[i] || rankColors[rankColors.length - 1]);
+  });
 
-// Labels only for nodes with children (no labels for leaves)
-const labelGroups = g.selectAll("g.label")
-  .data(nodes.filter(d => d.children))
-  .join("g")
-  .attr("class", "label");
+  const circles = g.selectAll("circle.bubble")
+    .data(nodes)
+    .join("circle")
+    .attr("class", "bubble")
+    .attr("r", d => d.r)
+    .attr("cx", d => d.x)
+    .attr("cy", d => d.y)
+    .attr("fill", d => colorMap.get(d))
+    .style("cursor", d => d.children ? "pointer" : (d.data.hyperlink ? "pointer" : "default"))
+    .on("click", (event, d) => {
+      if (d.children) {
+        zoom(event, d);
+      } else if (d.data.hyperlink) {
+        window.open(d.data.hyperlink, "_blank");
+      }
+      event.stopPropagation();
+    })
+    .on("mousemove", (event, d) => {
+      tooltip.style("opacity", 1)
+        .html(d.data.name)
+        .style("left", `${event.pageX + 12}px`)
+        .style("top", `${event.pageY + 12}px`);
+    })
+    .on("mouseout", () => tooltip.style("opacity", 0));
 
-labelGroups.each(function(d) {
-  const group = d3.select(this);
+  const labelGroups = g.selectAll("g.label")
+    .data(nodes.filter(d => d.children && (d.descendants().length - 1) > 2))
+    .join("g")
+    .attr("class", "label");
 
-  // Count descendants excluding itself
-  const descendantCount = d.descendants().length - 1;
+  labelGroups.each(function(d) {
+    const group = d3.select(this);
+    const label = `${d.data.name} (${d.descendants().length - 1})`;
 
-  const label = `${d.data.name} (${descendantCount})`;
+    const text = group.append("text")
+      .text(label)
+      .attr("text-anchor", "middle")
+      .style("font-size", bubbleLabelFontSize);
 
-  const text = group.append("text")
-    .text(label)
-    .attr("text-anchor", "middle");
-
-  const bbox = text.node().getBBox();
-  group.insert("rect", "text")
-    .attr("x", bbox.x - 6)
-    .attr("y", bbox.y - 2)
-    .attr("width", bbox.width + 12)
-    .attr("height", bbox.height + 4)
-    .attr("rx", 6)
-    .attr("ry", 6);
-});
-
+    requestAnimationFrame(() => {
+      const bbox = text.node().getBBox();
+      group.insert("rect", "text")
+        .attr("x", bbox.x - 6)
+        .attr("y", bbox.y - 2)
+        .attr("width", bbox.width + 12)
+        .attr("height", bbox.height + 4)
+        .attr("rx", 6)
+        .attr("ry", 6);
+    });
+  });
 
   svg.on("click", () => {
     if (focus.parent) {
@@ -467,31 +470,18 @@ labelGroups.each(function(d) {
 
   zoomTo([focus.x, focus.y, focus.r * 2]);
 
-// Show Home button if not at root
-if (focus !== packedRoot) {
-  homeButton.style("display", "block")
-    .text(`Home`)
-    .on("click", () => zoom(null, packedRoot)); // Zoom to root
-} else {
-  homeButton.style("display", "none")
-    .on("click", null);
-}
+  if (focus !== packedRoot) {
+    homeButton.style("display", "block")
+      .text(`Home`)
+      .on("click", () => zoom(null, packedRoot));
+  } else {
+    homeButton.style("display", "none")
+      .on("click", null);
+  }
 
-// Count all descendants (including both parents and leaves, EXCLUDING the current node)
-function countAllDescendants(node) {
-  // .descendants() includes the node itself, so subtract 1
-  return node.descendants().length - 1;
-}
+  d3.select("#leaf-count").text(`Sub-pages: ${focus.descendants().length - 1}`);
+  d3.select("#level-count").text(`Level: ${focus.depth}`);
 
-// Leaf count
-const descendantCount = countAllDescendants(focus);
-d3.select("#leaf-count").text(`Sub-pages: ${descendantCount}`);
-
-// Show current level
-const level = focus.depth;
-d3.select("#level-count").text(`Level: ${level}`);
-
-  // Update Back Link visibility and text
   if (focus.parent) {
     backLink.style("display", "block")
       .text(`Back to ${focus.parent.data.name}`)
@@ -525,16 +515,22 @@ function zoom(event, d) {
   update(focus);
 }
 
-// Parse CSV
+function packData(data) {
+  return d3.pack()
+    .size([layoutWidth, layoutHeight])
+    .padding(5)(d3.hierarchy(data)
+      .sum(d => d.children ? 0 : 1)
+      .sort((a, b) => b.value - a.value)
+    );
+}
+
 function csvToHierarchy(csv) {
   const rows = d3.csvParseRows(csv);
   const root = { name: "HUD.gov Home Page", children: [] };
 
   rows.forEach(row => {
     let cur = root;
-    // Assume last column is hyperlink
     const hyperlink = row[row.length - 1];
-    // All other columns except last
     const categories = row.slice(0, row.length - 1);
 
     categories.forEach(cat => {
@@ -548,13 +544,11 @@ function csvToHierarchy(csv) {
       }
     });
 
-    // Assign hyperlink only on leaf nodes
     if (hyperlink && hyperlink.trim()) {
       cur.hyperlink = hyperlink.trim();
     }
   });
 
-  // Clean up nodes that have empty children arrays
   function clean(n) {
     if (n.children.length === 0) {
       delete n.children;
@@ -567,6 +561,11 @@ function csvToHierarchy(csv) {
   return root;
 }
 
+updateLeafInstructionPosition();
+window.addEventListener("resize", () => {
+  updateLeafInstructionPosition();
+  if (packedRoot && focus) update(focus); // Redraw with new font size
+});
 
 
 //document.getElementById("upload")
