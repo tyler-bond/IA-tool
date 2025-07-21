@@ -129,14 +129,60 @@
     }
   }
 
+/* --- Adjust display settings for 13-inch laptop FIRST --- */
+@media (max-width: 1366px) and (max-height: 800px) {
+  #current-title {
+    top: -5px;
+  }
 
-@media (max-width: 480px) {
+  #home-button {
+    top: 20px;
+    left: 90px;
+  }
+
+  #back-link {
+    top: 70px;
+    left: 90px;
+  }
+
+  #leaf-count {
+    top: 70px;
+    right: 90px;
+  }
+
+  #level-count {
+    top: 120px;
+    right: 90px;
+  }
+}
+
+/* --- Adjust display settings for big screen --- */
+@media (min-width: 1400px) and (min-resolution: 1.5dppx) {
+  #home-button {
+    left: 160px;
+  }
+
+  #back-link {
+    left: 160px;
+  }
+
+  #leaf-count {
+    right: 160px;
+  }
+
+  #level-count {
+    right: 160px;
+  }
+}
+
+/* --- Adjust display settings for mobile (iPhone) LAST --- */
+@media (max-width: 480px) and (hover: none) and (pointer: coarse) {
   svg {
-    margin-top: 100px; /* or whatever larger value you want */
+    margin-top: 100px;
   }
 
   #current-title {
-    top: 40px; /* push the title down too, if needed */
+    top: 40px;
     font-size: 20px;
   }
 
@@ -157,46 +203,6 @@
   }
 }
 
-
-// Adjust display settings for 13 inch laptop
-  @media (max-width: 1366px) and (max-height: 800px) {
-    #current-title {
-      top: -5px;
-    }
-   #home-button {
-         top: 20px;
-         left: 90px;
-       }
-   #back-link {
-      top: 70px;
-      left: 90px;
-    }
-    #leaf-count {
-      top: 70px;
-      right: 90px;
-}
-    #level-count {
-      top: 120px;
-      right: 90px;
-  }
-}
-
-// Adjust display settings for big screen
-@media (min-width: 1400px) and (min-resolution: 1.5dppx)  {
-  #home-button {
-    left: 160px;
-  }
-
-  #back-link {
-    left: 160px;
-  }
-  #leaf-count {
-    right: 160px;
-  }
-  #level-count {
-    right: 160px;
-  }
-}
 
   /* SVG with balanced top and bottom margins */
   svg {
@@ -297,7 +303,7 @@ let packedRoot, focus, view;
 // Create instruction text ONCE and keep it persistent
 const leafInstructionText = g.append("text")
   .attr("x", layoutWidth / 2)
-  .attr("y", 790)
+  .attr("y", 790) // initial/default y-position
   .attr("text-anchor", "middle")
   .style("font-family", "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif")
   .style("font-weight", "600")
@@ -311,26 +317,33 @@ const leafInstructionText = g.append("text")
 // Adjust instruction text position based on screen size
 function updateLeafInstructionPosition() {
   const screenHeight = window.innerHeight;
+  const screenWidth = window.innerWidth;
 
   let yPos;
-  if (screenHeight <= 450) {
-    yPos = layoutHeight - 10;
+
+  if (screenWidth <= 1366 && screenHeight <= 800) {
+    // 13-inch laptops — move it lower
+    yPos = layoutHeight - 5;
+  } else if (screenHeight <= 450) {
+    yPos = layoutHeight - 5;
   } else if (screenHeight <= 600) {
-    yPos = layoutHeight - 30;
+    yPos = layoutHeight - 20;
   } else if (screenHeight <= 800) {
-    yPos = layoutHeight - 50;
+    yPos = layoutHeight - 40;
   } else {
-    yPos = 790; // default for full-size screens
+    yPos = layoutHeight - 10; // Lower than original 790 default
   }
 
   leafInstructionText.attr("y", yPos);
 }
 
+
 // Call it once during setup
 updateLeafInstructionPosition();
 
-// And also call it whenever the window resizes
+// And again whenever the window resizes
 window.addEventListener("resize", updateLeafInstructionPosition);
+
 
 function packData(data) {
   return d3.pack()
