@@ -100,12 +100,12 @@
   /* Responsive adjustments for title and back-link */
   @media (max-height: 800px) {
     #current-title {
-      top: 0px;
+      top: 20px;
       font-size: 28px;
     }
 
     #home-button {
-      top: 20px;
+      top: 30px;
       font-size: 20px;
      }
     #back-link {
@@ -129,20 +129,74 @@
     }
   }
 
-  @media (max-height: 450px) {
-    #current-title {
-      top: -10px;
-      font-size: 20px;
-    }
-    #home-button {
-      top: 0px;
-      font-size: 16px;
-    }
-    #back-link {
-      top: 85px;
-      font-size: 16px;
-    }
+
+@media (max-width: 480px) {
+  svg {
+    margin-top: 100px; /* or whatever larger value you want */
   }
+
+  #current-title {
+    top: 40px; /* push the title down too, if needed */
+    font-size: 20px;
+  }
+
+  #home-button {
+    top: 80px;
+    font-size: 18px;
+  }
+
+  #back-link {
+    top: 120px;
+    font-size: 18px;
+  }
+
+  #leaf-count,
+  #level-count {
+    top: 160px;
+    font-size: 16px;
+  }
+}
+
+
+// Adjust display settings for 13 inch laptop
+  @media (max-width: 1366px) and (max-height: 800px) {
+    #current-title {
+      top: -5px;
+    }
+   #home-button {
+         top: 20px;
+         left: 90px;
+       }
+   #back-link {
+      top: 70px;
+      left: 90px;
+    }
+    #leaf-count {
+      top: 70px;
+      right: 90px;
+}
+    #level-count {
+      top: 120px;
+      right: 90px;
+  }
+}
+
+// Adjust display settings for big screen
+@media (min-width: 1400px) and (min-resolution: 1.5dppx)  {
+  #home-button {
+    left: 160px;
+  }
+
+  #back-link {
+    left: 160px;
+  }
+  #leaf-count {
+    right: 160px;
+  }
+  #level-count {
+    right: 160px;
+  }
+}
 
   /* SVG with balanced top and bottom margins */
   svg {
@@ -253,6 +307,30 @@ const leafInstructionText = g.append("text")
   .style("pointer-events", "none")
   .style("display", "none")
   .text("Mouse Over to View Page Title");
+
+// Adjust instruction text position based on screen size
+function updateLeafInstructionPosition() {
+  const screenHeight = window.innerHeight;
+
+  let yPos;
+  if (screenHeight <= 450) {
+    yPos = layoutHeight - 10;
+  } else if (screenHeight <= 600) {
+    yPos = layoutHeight - 30;
+  } else if (screenHeight <= 800) {
+    yPos = layoutHeight - 50;
+  } else {
+    yPos = 790; // default for full-size screens
+  }
+
+  leafInstructionText.attr("y", yPos);
+}
+
+// Call it once during setup
+updateLeafInstructionPosition();
+
+// And also call it whenever the window resizes
+window.addEventListener("resize", updateLeafInstructionPosition);
 
 function packData(data) {
   return d3.pack()
