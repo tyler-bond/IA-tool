@@ -247,7 +247,7 @@
     fill-opacity: 1;
   }
   g.label text {
-    font: 13px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font: 20px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     font-weight: 600;
     fill: #fff;
     text-anchor: middle;
@@ -266,7 +266,7 @@
     border-radius: 6px;
     pointer-events: none;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 13px;
+    font-size: 20px;
     font-weight: 600;
     white-space: nowrap;
     opacity: 0;
@@ -313,7 +313,22 @@ const leafInstructionText = g.append("text")
   .style("user-select", "none")
   .style("pointer-events", "none")
   .style("display", "none")
-  .text("Mouse Over to View Page Title");
+  .text("Mouse Over to View Page Title\u00A0\u00A0/\u00A0\u00A0Click to Open Page in New Tab");
+
+// Create front page description text ONCE and keep it persistent
+const frontPageDescription = g.append("text")
+  .attr("x", layoutWidth / 2)
+  .attr("y", 790) // placeholder; will update dynamically
+  .attr("text-anchor", "middle")
+  .style("font-family", "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif")
+  .style("font-weight", "600")
+  .style("font-size", "20px")
+  .style("fill", "black")
+  .style("user-select", "none")
+  .style("pointer-events", "none")
+  .style("display", "block") // initially visible on homepage
+  .text("This HUD.gov Information Architecture (IA) Interactive Tool was developed by HUD's Customer Experience (CX) division. All information is publicly available on the HUD.gov website.");
+
 
 // Adjust instruction text position based on screen size
 function updateLeafInstructionPosition() {
@@ -323,7 +338,6 @@ function updateLeafInstructionPosition() {
   let yPos;
 
   if (screenWidth <= 1366 && screenHeight <= 800) {
-    // 13-inch laptops — move it lower
     yPos = layoutHeight - 5;
   } else if (screenHeight <= 450) {
     yPos = layoutHeight - 5;
@@ -332,11 +346,13 @@ function updateLeafInstructionPosition() {
   } else if (screenHeight <= 800) {
     yPos = layoutHeight - 40;
   } else {
-    yPos = layoutHeight - 10; // Lower than original 790 default
+    yPos = layoutHeight - 10;
   }
 
   leafInstructionText.attr("y", yPos);
+  frontPageDescription.attr("y", yPos); // Keep them aligned
 }
+
 
 
 // Call it once during setup
@@ -366,8 +382,10 @@ function update(focusNode) {
   const nodes = focus.children || [];
 
   // Show instruction text if ALL visible nodes are leaf nodes
-  const allLeavesVisible = nodes.length > 0 && nodes.every(d => !d.children || d.children.length === 0);
-  leafInstructionText.style("display", allLeavesVisible ? "block" : "none");
+const allLeavesVisible = nodes.length > 0 && nodes.every(d => !d.children || d.children.length === 0);
+leafInstructionText.style("display", allLeavesVisible ? "block" : "none");
+
+frontPageDescription.style("display", focus.data === packedRoot.data ? "block" : "none");
 
 // 1. Color mapping
 const colorMap = new Map();
